@@ -1,102 +1,51 @@
-# 🎓 MCBU Öğrenci İşleri MCP Projesi
+# 🎓 MCBU Öğrenci İşleri MCP Server
 
-> **Manisa Celal Bayar Üniversitesi Öğrenci İşleri Otomasyonu için Model Context Protocol (MCP) tabanlı chatbot sistemi**
+> **Manisa Celal Bayar Üniversitesi için Model Context Protocol (MCP) tabanlı öğrenci işleri chatbot sistemi**
 
-## 📋 Proje Hakkında
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
+[![Continue.dev](https://img.shields.io/badge/Continue.dev-Compatible-green.svg)](https://continue.dev)
 
-Bu proje, öğrenci işlerine yönelik süreçleri hızlandırmak ve otomatikleştirmek amacıyla geliştirilmiş bir MCP (Model Context Protocol) tabanlı chatbot sistemidir. Öğrencilere çeşitli işlemler ve bilgilendirmeler sunarak, öğrenci işleriyle doğrudan iletişim kurma gereksinimini azaltmayı hedefler.
+## 🌟 Özellikler
 
-### 🎯 Ana Hedefler
-- Öğrenci işleri süreçlerinin otomasyonu
-- 7/24 öğrenci hizmetleri
-- Hızlı ve doğru bilgi erişimi
-- İş yükü azaltımı
+- 🔍 **Öğrenci Bilgi Sorgulama**: Detaylı öğrenci kayıtları ve akademik geçmiş
+- 📊 **Not Sistemi**: Sınav notları, GANO hesaplama, dönem ortalamaları  
+- 🏢 **Organizasyon Yapısı**: Fakülte, bölüm ve öğretim üyesi bilgileri
+- 🎯 **Continue.dev Entegrasyonu**: Doğal dil ile veritabanı sorguları
+- ⚡ **Yüksek Performans**: Optimize edilmiş SQLite veritabanı
+- 🛡️ **Güvenli**: SQL injection koruması ve parameterized queries
 
-## 🚀 Özellikler
+## 🚀 Hızlı Başlangıç
 
-### 🔧 Üç Ana Tool
-1. **MCBU Web Scraper** (`mcbu_web_scraper`)
-   - Üniversite web sitesini scrape eder
-   - Vizyon, misyon, fakülte bilgileri
-   - Akademik takvim ve duyurular
-   - İletişim bilgileri
+### Gereksinimler
+- Python 3.8+
+- Continue.dev (VS Code veya JetBrains)
 
-2. **Öğrenci Veritabanı** (`student_database`) 
-   - Kapsamlı öğrenci bilgi sistemi
-   - Not sorguları ve akademik geçmiş
-   - Ders kayıtları ve programlar
-   - Staj, burs ve kulüp bilgileri
-   - Belge talepleri ve başvurular
+### Kurulum
 
-3. **Web API Entegrasyonu** (`web_api_integration`)
-   - Gelecekteki API entegrasyonu için placeholder
-   - Gerçek zamanlı sistem bağlantısı (geliştirme aşamasında)
-   - Mock veriler ile test imkanı
-
-### 📊 Kapsamlı Veritabanı
-- **23 farklı tablo** ile ilişkisel veri yapısı
-- Öğrenci demografik ve akademik bilgileri
-- Fakülte, bölüm ve öğretim üyesi kayıtları
-- Not sistemi ve başarı takibi
-- Sosyal aktiviteler ve kulüp üyelikleri
-- Staj ve mesajlaşma sistemleri
-
-## 🏗️ Proje Yapısı
-
-```
-student_affairs_mcp/
-├── src/
-│   ├── main.py                    # MCP server entry point
-│   ├── config/
-│   │   ├── settings.py            # Proje ayarları
-│   │   └── database.py            # DB yapılandırması
-│   ├── tools/
-│   │   ├── base_tool.py           # Temel tool sınıfı
-│   │   ├── mcbu_scraper.py        # Web scraper tool
-│   │   ├── student_db.py          # Veritabanı tool
-│   │   └── web_api_placeholder.py # API placeholder
-│   ├── database/
-│   │   ├── connection.py          # DB bağlantı yöneticisi
-│   │   └── schema.sql             # Veritabanı şeması
-│   └── mcp/
-│       └── server.py              # MCP server sınıfı
-├── data/
-│   ├── student_affairs.db         # SQLite veritabanı
-│   └── logs/                      # Log dosyaları
-└── scripts/
-    └── setup_database.py          # Kurulum scripti
-```
-
-## 🛠️ Kurulum
-
-### 1. Gereksinimleri Yükleyin
 ```bash
-git clone <repository-url>
-cd student_affairs_mcp
+# Repository'yi klonlayın
+git clone https://github.com/KULLANICI_ADI/mcbu-student-affairs-mcp.git
+cd mcbu-student-affairs-mcp
+
+# Bağımlılıkları yükleyin
 pip install -r requirements.txt
-```
 
-### 2. Çevre Değişkenlerini Ayarlayın
-```bash
-# .env dosyası oluşturun (opsiyonel - web scraper için)
-touch .env
-```
+# Hızlı kurulum ve test
+python scripts/setup_database.py
 
-### 3. Veritabanını Başlatın
-```bash
+# Server'ı başlatın
 python src/main.py
-# İlk çalıştırmada otomatik olarak veritabanı ve örnek veriler oluşturulur
 ```
 
-### 4. Continue.dev ile Entegrasyon
-Continue.dev konfigürasyonuna ekleyin:
+### Continue.dev Konfigürasyonu
 
 ```json
 {
   "mcpServers": {
     "mcbu-student-affairs": {
       "command": "python",
-      "args": ["/tam/yol/student_affairs_mcp/src/main.py"],
+      "args": ["/tam/yol/mcbu-student-affairs-mcp/src/main.py"],
       "env": {}
     }
   }
@@ -105,159 +54,95 @@ Continue.dev konfigürasyonuna ekleyin:
 
 ## 💡 Kullanım Örnekleri
 
-### 🔍 Öğrenci Bilgi Sorgulama
 ```
-Continue.dev chatinde:
 "202012345 numaralı öğrencinin bilgilerini getir"
-"Ahmet Yılmaz isimli öğrencileri ara"
+"Ahmet isimli öğrencileri ara"
+"Bilgisayar Mühendisliği öğrencilerini listele"
+"Veritabanı istatistiklerini göster"
+"En yüksek GANO'ya sahip öğrencileri bul"
 ```
 
-### 📚 Akademik Sorgular
-```
-"202012345 numaralı öğrencinin notlarını göster"
-"2024-2025 Bahar dönemindeki derslerini listele"
-"GANO hesapla ve dönem ortalamaları"
-```
+## 🏗️ Proje Yapısı
 
-### 🏢 Üniversite Bilgileri
 ```
-"MCBU'nun vizyon ve misyonunu anlat"
-"Mühendislik fakültesindeki bölümleri listele"
-"Akademik takvimi getir"
-```
-
-### 📋 İdari İşlemler
-```
-"Mezuniyet belgesi talep durumunu kontrol et"
-"Aktif burs ve kredi bilgilerini göster"
-"Kulüp üyeliklerimi listele"
+mcbu-student-affairs-mcp/
+├── src/
+│   ├── main.py                 # MCP server entry point
+│   ├── database/
+│   │   └── connection.py       # SQLite veritabanı yöneticisi
+│   └── tools/
+│       ├── base_tool.py        # Temel tool sınıfı
+│       └── student_db.py       # Öğrenci veritabanı tool'u
+├── scripts/
+│   └── quick_setup.py          # Hızlı kurulum scripti
+├── data/                       # Veritabanı dosyaları (otomatik)
+├── requirements.txt            # Python bağımlılıkları
+└── README.md
 ```
 
 ## 🗃️ Veritabanı Şeması
 
 ### Ana Tablolar
-- **ogrenciler**: Temel öğrenci bilgileri
-- **fakulteler/bolumler**: Akademik organizasyon
+- **ogrenciler**: Öğrenci bilgileri ve akademik durum
+- **fakulteler**: Fakülte organizasyonu
+- **bolumler**: Bölüm yapısı
 - **ogretim_uyeleri**: Öğretim kadrosu
 - **dersler**: Ders kataloğu
-- **sinav_notlari**: Akademik başarı
-- **ogrenci_ders_kayitlari**: Ders alım geçmişi
+- **sinav_notlari**: Akademik başarı kayıtları
 
-### Destekleyici Tablolar
-- **burs_krediler**: Mali destek bilgileri
-- **stajlar**: Staj kayıtları
-- **kulup_topluluklar**: Sosyal aktiviteler
-- **mesajlar**: İletişim sistemi
-- **belge_talepleri**: Belge işlemleri
+## 🔧 API Referansı
 
-## 🔧 Tool API Referansı
+### Student Database Tool İşlemleri
 
-### MCBU Web Scraper
-```json
+| İşlem | Açıklama |
+|-------|----------|
+| `ogrenci_ara` | Öğrenci arama (ad, soyad, numara) |
+| `ogrenci_detay` | Detaylı öğrenci bilgileri |
+| `notlari_getir` | Sınav notları ve ortalamaları |
+| `dersleri_listele` | Ders kayıt geçmişi |
+| `fakulte_bolum_listesi` | Organizasyon yapısı |
+| `danisman_bilgisi` | Danışman iletişim bilgileri |
+| `istatistik` | Genel veritabanı istatistikleri |
+
+### Örnek Kullanım
+
+```python
+# Tool çağrısı
 {
-  "page_type": "vizyon_misyon|fakulteler|bolumler|akademik_takvim",
-  "custom_url": "https://www.mcbu.edu.tr/custom-page",
-  "max_content_length": 5000
+  "operation": "ogrenci_ara",
+  "arama_metni": "Ahmet",
+  "limit": 10
 }
 ```
 
-### Öğrenci Veritabanı
-```json
-{
-  "operation": "ogrenci_ara|ogrenci_bilgileri|ogrenci_notlari",
-  "ogrenci_no": "202012345",
-  "akademik_donem": "2024-2025 Bahar",
-  "limit": 50
-}
+## 🧪 Test Etme
+
+```bash
+# Kurulum testi
+python scripts/setup_database.py
+
+# Manuel test
+python -c "
+import asyncio
+from src.tools.student_db import StudentDatabaseTool
+from src.database.connection import DatabaseManager
+
+async def test():
+    db = DatabaseManager()
+    await db.initialize()
+    tool = StudentDatabaseTool(db)
+    result = await tool.execute(operation='istatistik')
+    print(result)
+
+asyncio.run(test())
+"
 ```
 
-#### Desteklenen İşlemler
-- `ogrenci_ara`: Öğrenci arama
-- `ogrenci_bilgileri`: Detaylı bilgiler  
-- `ogrenci_notlari`: Not ve başarı durumu
-- `ogrenci_dersleri`: Ders kayıtları
-- `devamsizlik_sorgula`: Devamsızlık kontrol
-- `burs_bilgileri`: Burs ve krediler
-- `staj_bilgileri`: Staj kayıtları
-- `kulup_uyelikleri`: Kulüp aktiviteleri
-- `danisman_bilgileri`: Danışman iletişim
-- `custom_query`: Özel SQL sorguları
 
-## 🔒 Güvenlik
+## 📋 Yapılacaklar
 
-### SQL Güvenliği
-- Sadece SELECT sorguları desteklenir
-- Parametreli sorgular kullanılır
-- Tehlikeli anahtar kelimeler engellenir
-- Sonuç sayısı sınırlandırılır
-
-### Veri Gizliliği
-- Kişisel verilerin korunması
-- KVKK uyumlu veri işleme
-- Log kayıtlarında hassas bilgi maskeleme
-
-## 📈 Gelecek Geliştirmeler
-
-### Faz 1: API Entegrasyonu
-- [ ] Üniversite IT departmanı ile koordinasyon
-- [ ] Gerçek API endpoint'leri entegrasyonu
-- [ ] OAuth2/JWT kimlik doğrulama
-
-### Faz 2: İleri Özellikler  
-- [ ] Gerçek zamanlı bildirimler
-- [ ] Belge otomatik oluşturma
-- [ ] E-imza entegrasyonu
-- [ ] Mobile uygulaması
-
-### Faz 3: AI Geliştirmeleri
-- [ ] Doğal dil işleme geliştirilmesi
-- [ ] Otomatik form doldurma
-- [ ] Akıllı öneri sistemi
+- [ ] Web scraping tool entegrasyonu
+- [ ] Gerçek API bağlantısı
 - [ ] Çok dilli destek
-
-## 📞 İletişim ve Destek
-
-### Geliştirme Ekibi
-- **Proje Sahibi**: [İsim]
-- **Geliştirici**: [İsim]
-
-### Teknik Destek
-- **E-posta**: [email]
-- **GitHub**: [repository-url]
-
-### Üniversite İletişim
-- **Bilgi İşlem Daire Başkanlığı**: Gelecekteki API entegrasyonu için
-- **Öğrenci İşleri Daire Başkanlığı**: İş süreçleri koordinasyonu
-
-## 📄 Lisans
-
-Bu proje [Lisans Türü] altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakınız.
-
-## 🤝 Katkıda Bulunma
-
-1. Repository'yi fork edin
-2. Feature branch oluşturun (`git checkout -b feature/YeniOzellik`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Yeni özellik eklendi'`)
-4. Branch'inizi push edin (`git push origin feature/YeniOzellik`)
-5. Pull Request oluşturun
-
-## 📊 Proje İstatistikleri
-
-- **Toplam kod satırı**: ~2000+ 
-- **Tool sayısı**: 3
-- **Veritabanı tablosu**: 23
-- **Desteklenen işlem**: 15+
-- **Örnek veri**: 100+ kayıt
-
-## 🏆 Başarımlar
-
-- ✅ Modüler ve ölçeklenebilir mimari
-- ✅ Kapsamlı veritabanı tasarımı  
-- ✅ Type-safe kod yapısı
-- ✅ Async/await performans optimizasyonu
-- ✅ Comprehensive logging sistemi
-- ✅ Continue.dev entegrasyonu
-
----
-
-**Not**: Bu proje eğitim amaçlı geliştirilmiştir ve gerçek üniversite verilerini içermez. Tüm veriler örnek/dummy verilerdir.
+- [ ] Advanced analytics
+- [ ] Mobile uyumlu web interface

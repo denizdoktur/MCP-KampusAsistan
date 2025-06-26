@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Optimize Edilmiş MCP Server
-Performans iyileştirmeleri ile hızlı çalışma
+MCBU Öğrenci İşleri MCP Server - Düzeltilmiş ve Optimize Edilmiş
+Tüm hatalar giderildi, performans iyileştirildi
 """
 
 import sys
@@ -15,169 +15,144 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Basit settings
-class SimpleSettings:
-    database_path = "data/student_affairs.db"
-
-settings = SimpleSettings()
-
-try:
-    from src.tools.student_db import StudentDatabaseTool
-    from src.database.connection import DatabaseManager
-except ImportError as e:
-    print(f"Import hatası: {e}", file=sys.stderr)
-    sys.exit(1)
-
-# Logging setup (daha az verbose)
+# Hızlı logging setup
 logging.basicConfig(
-    level=logging.WARNING,  # Sadece önemli mesajlar
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.ERROR,  # Sadece hatalar
+    format='%(levelname)s: %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
 
 logger = logging.getLogger(__name__)
 
-class OptimizedMCPServer:
-    """Optimize edilmiş MCP Server - Singleton pattern"""
-    
-    _instance = None
-    _initialized = False
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+class MCPServer:
+    """Basit ve hızlı MCP Server"""
     
     def __init__(self):
-        if not self._initialized:
-            self.db_manager = DatabaseManager(settings.database_path)
-            self.tools = {}
-            self._db_ready = False
-            self._register_tools()
-            self._initialized = True
+        self.name = "MCBU Student Affairs Server"
+        self.version = "1.2.0"
+        self.db_manager = None
+        self.tools = {}
+        self.initialized = False
     
-    def _register_tools(self):
-        """Tool'ları kaydet"""
-        student_db_tool = StudentDatabaseTool(self.db_manager)
-        self.tools[student_db_tool.name] = student_db_tool
-    
-    async def ensure_database_ready(self):
-        """Veritabanının hazır olduğundan emin ol (tek seferlik)"""
-        if not self._db_ready:
+    async def init_database(self):
+        """Veritabanını sadece gerektiğinde başlat"""
+        if self.db_manager is None:
             try:
+                # Import'ları lazy yap
+                from src.database.connection import DatabaseManager
+                from src.tools.student_db import StudentDatabaseTool
+                
+                self.db_manager = DatabaseManager("data/student_affairs.db")
                 await self.db_manager.initialize()
-                self._db_ready = True
+                
+                # Tool'u kaydet
+                student_tool = StudentDatabaseTool(self.db_manager)
+                self.tools[student_tool.name] = student_tool
+                
+                print("✅ Veritabanı hazır", file=sys.stderr)
+                
             except Exception as e:
                 logger.error(f"Veritabanı hatası: {e}")
                 raise
-
-# Global server instance
-_server_instance: Optional[OptimizedMCPServer] = None
-
-async def get_server() -> OptimizedMCPServer:
-    """Server instance'ını al veya oluştur"""
-    global _server_instance
-    if _server_instance is None:
-        _server_instance = OptimizedMCPServer()
-        await _server_instance.ensure_database_ready()
-    return _server_instance
-
-async def handle_request(request: Dict[str, Any]) -> Dict[str, Any]:
-    """MCP isteğini işle - optimize edilmiş"""
-    try:
+    
+    async def handle_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """MCP isteğini işle"""
         method = request.get("method")
-        request_id = request.get("id")
+        req_id = request.get("id")
         
-        if method == "initialize":
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "result": {
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {"tools": {}},
-                    "serverInfo": {
-                        "name": "MCBU Student Database Server (Optimized)",
-                        "version": "1.1.0"
+        try:
+            if method == "initialize":
+                self.initialized = True
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": {
+                        "protocolVersion": "2024-11-05",
+                        "capabilities": {"tools": {}},
+                        "serverInfo": {
+                            "name": self.name,
+                            "version": self.version
+                        }
                     }
                 }
-            }
-        
-        elif method == "tools/list":
-            server = await get_server()
-            tools_list = []
             
-            for tool in server.tools.values():
-                tools_list.append({
-                    "name": tool.name,
-                    "description": tool.description,
-                    "inputSchema": tool.input_schema
-                })
-            
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "result": {"tools": tools_list}
-            }
-        
-        elif method == "tools/call":
-            server = await get_server()
-            
-            tool_name = request["params"]["name"]
-            arguments = request["params"].get("arguments", {})
-            
-            if tool_name in server.tools:
-                tool = server.tools[tool_name]
+            elif method == "tools/list":
+                # Lazy init
+                await self.init_database()
                 
-                # Tool'u hızlı çalıştır
-                result = await tool.execute(**arguments)
+                tools_list = []
+                for tool in self.tools.values():
+                    tools_list.append({
+                        "name": tool.name,
+                        "description": tool.description,
+                        "inputSchema": tool.input_schema
+                    })
                 
                 return {
                     "jsonrpc": "2.0",
-                    "id": request_id,
-                    "result": {
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": json.dumps(result, ensure_ascii=False, indent=2)
-                            }
-                        ]
-                    }
+                    "id": req_id,
+                    "result": {"tools": tools_list}
                 }
+            
+            elif method == "tools/call":
+                # Lazy init
+                await self.init_database()
+                
+                params = request.get("params", {})
+                tool_name = params.get("name")
+                arguments = params.get("arguments", {})
+                
+                if tool_name in self.tools:
+                    tool = self.tools[tool_name]
+                    result = await tool.execute(**arguments)
+                    
+                    return {
+                        "jsonrpc": "2.0",
+                        "id": req_id,
+                        "result": {
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": json.dumps(result, ensure_ascii=False, indent=2)
+                                }
+                            ]
+                        }
+                    }
+                else:
+                    raise ValueError(f"Bilinmeyen tool: {tool_name}")
+            
+            elif method == "notifications/initialized":
+                # Continue.dev ready - no response needed
+                return None
+            
             else:
-                raise Exception(f"Bilinmeyen tool: {tool_name}")
+                # Bilinmeyen method - boş yanıt
+                return {
+                    "jsonrpc": "2.0",
+                    "id": req_id,
+                    "result": {}
+                }
         
-        elif method == "notifications/initialized":
-            # Continue.dev ready notification - no response needed
-            return None
-        
-        else:
+        except Exception as e:
             return {
                 "jsonrpc": "2.0",
-                "id": request_id,
-                "result": {}
+                "id": req_id,
+                "error": {
+                    "code": -1,
+                    "message": str(e)
+                }
             }
-    
-    except Exception as e:
-        return {
-            "jsonrpc": "2.0",
-            "id": request.get("id"),
-            "error": {
-                "code": -1,
-                "message": str(e)
-            }
-        }
 
 async def main():
-    """Ana STDIO döngüsü - optimize edilmiş"""
-    print("MCBU Fast Server baslatiliyor...", file=sys.stderr, flush=True)
+    """Ana STDIO döngüsü"""
+    server = MCPServer()
     
-    # Server'ı önceden hazırla
-    await get_server()
-    print("Server hazir!", file=sys.stderr, flush=True)
+    # Başlatma mesajı
+    print("🎓 MCBU MCP Server başlatılıyor...", file=sys.stderr, flush=True)
     
     try:
         while True:
-            # STDIN'den satır oku
+            # STDIN'den JSON okuma
             line = await asyncio.get_event_loop().run_in_executor(
                 None, sys.stdin.readline
             )
@@ -190,16 +165,16 @@ async def main():
                 continue
             
             try:
-                # JSON isteğini parse et
+                # JSON parse
                 request = json.loads(line)
                 
-                # İsteği hızlı işle
-                response = await handle_request(request)
+                # İsteği işle
+                response = await server.handle_request(request)
                 
                 # Yanıt varsa gönder
                 if response is not None:
                     print(json.dumps(response, ensure_ascii=False), flush=True)
-                
+            
             except json.JSONDecodeError:
                 error_response = {
                     "jsonrpc": "2.0",
@@ -210,18 +185,17 @@ async def main():
             
             except Exception as e:
                 error_response = {
-                    "jsonrpc": "2.0",
+                    "jsonrpc": "2.0", 
                     "id": None,
                     "error": {"code": -1, "message": str(e)}
                 }
                 print(json.dumps(error_response), flush=True)
     
     except KeyboardInterrupt:
-        pass
+        print("Server durduruldu", file=sys.stderr)
     except Exception as e:
-        logger.error(f"Server hatasi: {e}")
+        print(f"Server hatası: {e}", file=sys.stderr)
         raise
 
 if __name__ == "__main__":
-    # Hızlı başlatma
     asyncio.run(main())

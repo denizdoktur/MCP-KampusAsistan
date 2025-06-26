@@ -54,7 +54,7 @@ class BaseTool(ABC):
             if field not in parameters:
                 raise ValueError(f"Zorunlu parametre eksik: {field}")
         
-        # Tip kontrolü (basit)
+        # Tip kontrolü 
         validated = {}
         for field, value in parameters.items():
             if field in properties:

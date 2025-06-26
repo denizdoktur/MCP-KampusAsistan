@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Öğrenci İşleri MCP Projesi - Veritabanı Kurulum Scripti
-Bu script veritabanını kurar ve örnek verileri ekler
+MCBU MCP Projesi - Hızlı Kurulum
+1 dakikada kurulum ve test
 """
 
 import sys
@@ -9,255 +9,170 @@ import asyncio
 import logging
 from pathlib import Path
 
-# Proje kök dizinini path'e ekle
+# Proje kök dizini
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.database.connection import DatabaseManager
-from src.config.settings import Settings
+# Minimal logging
+logging.basicConfig(level=logging.ERROR)
 
-# Logging setup
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-async def setup_database():
-    """Veritabanını kur ve test et"""
+async def quick_setup():
+    """Hızlı kurulum"""
     
-    print("🎓 MCBU Öğrenci İşleri MCP Projesi - Veritabanı Kurulumu")
-    print("=" * 60)
+    print("🚀 MCBU MCP Hızlı Kurulum")
+    print("-" * 40)
     
     try:
-        # Settings yükle
-        settings = Settings()
-        logger.info(f"📁 Veritabanı yolu: {settings.database_path}")
+        # 1. Database kurulumu
+        print("📊 Veritabanı kuruluyor...")
+        from src.database.connection import DatabaseManager
         
-        # DatabaseManager oluştur
-        db_manager = DatabaseManager(settings.database_path)
-        
-        # Veritabanını başlat
-        print("📊 Veritabanı şeması oluşturuluyor...")
+        db_manager = DatabaseManager("data/student_affairs.db")
         await db_manager.initialize()
         
-        # İstatistikleri göster
-        print("\n📈 Veritabanı İstatistikleri:")
+        # 2. İstatistikleri göster
         stats = await db_manager.get_database_stats()
-        for key, value in stats.items():
-            if '_count' in key:
-                table_name = key.replace('_count', '')
-                print(f"   {table_name}: {value} kayıt")
-            elif key == 'database_size_mb':
-                print(f"   Veritabanı boyutu: {value} MB")
+        print(f"   ✅ {stats.get('ogrenciler_count', 0)} öğrenci")
+        print(f"   ✅ {stats.get('fakulteler_count', 0)} fakülte")
+        print(f"   ✅ {stats.get('dersler_count', 0)} ders")
         
-        # Tabloları listele
-        print("\n📋 Oluşturulan Tablolar:")
-        tables = await db_manager.get_all_tables()
-        for table in tables:
-            if not table.startswith('sqlite_'):
-                print(f"   ✅ {table}")
-        
-        # Örnek sorgular
-        print("\n🔍 Örnek Sorgular Test Ediliyor:")
-        
-        # Öğrenci sayısı
-        student_count = await db_manager.fetch_scalar("SELECT COUNT(*) FROM ogrenciler")
-        print(f"   👥 Toplam öğrenci: {student_count}")
-        
-        # Fakülte sayısı
-        faculty_count = await db_manager.fetch_scalar("SELECT COUNT(*) FROM fakulteler")
-        print(f"   🏢 Toplam fakülte: {faculty_count}")
-        
-        # En yüksek GANO
-        max_gpa = await db_manager.fetch_scalar("SELECT MAX(gano) FROM ogrenciler WHERE gano IS NOT NULL")
-        print(f"   🏆 En yüksek GANO: {max_gpa}")
-        
-        # Örnek öğrenci bilgisi
-        sample_student = await db_manager.fetch_one("""
-            SELECT o.ogrenci_no, o.ad, o.soyad, f.fakülte_adi, b.bolum_adi
-            FROM ogrenciler o
-            JOIN fakulteler f ON o.fakulte_id = f.id
-            JOIN bolumler b ON o.bolum_id = b.id
-            LIMIT 1
-        """)
-        
-        if sample_student:
-            print(f"   📚 Örnek öğrenci: {sample_student['ogrenci_no']} - {sample_student['ad']} {sample_student['soyad']}")
-            print(f"     Fakülte: {sample_student['fakülte_adi']}")
-            print(f"     Bölüm: {sample_student['bolum_adi']}")
-        
-        print("\n✅ Veritabanı kurulumu başarıyla tamamlandı!")
-        print("\n📖 Kullanım Örnekleri:")
-        print("   python src/main.py  # MCP server'ı başlat")
-        print("   # Continue.dev ile test et:")
-        print("   # '202012345 numaralı öğrencinin bilgilerini getir'")
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Kurulum hatası: {e}")
-        return False
-
-async def test_tools():
-    """Tool'ları test et"""
-    print("\n🔧 Tool'lar Test Ediliyor:")
-    
-    try:
-        from src.tools.mcbu_scraper import MCBUScraperTool
+        # 3. Tool test
+        print("🔧 Tool test ediliyor...")
         from src.tools.student_db import StudentDatabaseTool
-        from src.tools.web_api_placeholder import WebAPIPlaceholderTool
-        from src.database.connection import DatabaseManager
-        from src.config.settings import Settings
         
-        # DatabaseManager
-        settings = Settings()
-        db_manager = DatabaseManager(settings.database_path)
-        
-        # Tool'ları oluştur
-        mcbu_scraper = MCBUScraperTool()
-        student_db = StudentDatabaseTool(db_manager)
-        web_api = WebAPIPlaceholderTool()
-        
-        print(f"   ✅ {mcbu_scraper.name}: {mcbu_scraper.description}")
-        print(f"   ✅ {student_db.name}: {student_db.description}")
-        print(f"   ✅ {web_api.name}: {web_api.description}")
+        tool = StudentDatabaseTool(db_manager)
         
         # Basit test
-        print("\n🧪 Basit Tool Testleri:")
+        test_result = await tool.execute(operation="istatistik")
         
-        # Student DB test
-        test_result = await student_db.execute(
-            operation="fakulte_bolum_listesi"
-        )
         if test_result.get("success"):
+            print("   ✅ Tool çalışıyor")
             data = test_result.get("data", {})
-            print(f"   ✅ Veritabanı tool'u: {len(data.get('fakulteler', []))} fakülte bulundu")
+            print(f"   📈 Toplam öğrenci: {data.get('toplam_ogrenci', 0)}")
         else:
-            print(f"   ❌ Veritabanı tool'u hatası: {test_result.get('error')}")
+            print(f"   ❌ Tool hatası: {test_result.get('error')}")
+            return False
         
-        # Web API test (mock)
-        api_result = await web_api.execute(
-            api_endpoint="student_info",
-            student_id="202012345"
+        # 4. Örnek sorgular
+        print("📝 Örnek sorgular test ediliyor...")
+        
+        # Öğrenci arama
+        search_result = await tool.execute(
+            operation="ogrenci_ara",
+            arama_metni="Ahmet",
+            limit=5
         )
-        if api_result.get("success"):
-            print("   ✅ Web API tool'u: Mock response başarılı")
-        else:
-            print(f"   ❌ Web API tool'u hatası: {api_result.get('error')}")
+        
+        if search_result.get("success"):
+            found = search_result.get("data", {}).get("bulunan_sayi", 0)
+            print(f"   ✅ Öğrenci arama: {found} sonuç")
+        
+        # Detay bilgi
+        detail_result = await tool.execute(
+            operation="ogrenci_detay",
+            ogrenci_no="202012345"
+        )
+        
+        if detail_result.get("success"):
+            print("   ✅ Öğrenci detay sorgusu çalışıyor")
+        
+        print("\n🎉 Kurulum Tamamlandı!")
+        print("\n📋 Sonraki Adımlar:")
+        print("1. Continue.dev config dosyasına ekleyin:")
+        print('   "mcbu-student": {')
+        print(f'     "command": "python",')
+        print(f'     "args": ["{project_root}/src/main.py"]')
+        print('   }')
+        print("\n2. Continue.dev chat'te test edin:")
+        print('   "202012345 numaralı öğrencinin bilgilerini getir"')
+        print('   "Bilgisayar Mühendisliği öğrencilerini listele"')
         
         return True
         
     except Exception as e:
-        logger.error(f"❌ Tool test hatası: {e}")
+        print(f"❌ Kurulum hatası: {e}")
         return False
 
-async def create_sample_queries():
-    """Örnek sorguları dosyaya yaz"""
-    print("\n📝 Örnek Sorguları Oluşturuluyor...")
-    
-    sample_queries = """
-# MCBU Öğrenci İşleri MCP - Örnek Sorgular
-
-## Continue.dev Chat Örnekleri
-
-### Öğrenci Bilgi Sorguları
-- "202012345 numaralı öğrencinin bilgilerini getir"
-- "Ahmet Yılmaz isimli öğrencileri ara"
-- "Bilgisayar Mühendisliği bölümündeki öğrencileri listele"
-
-### Akademik Sorguları
-- "202012345 numaralı öğrencinin notlarını göster"
-- "2024-2025 Bahar dönemindeki derslerini listele"
-- "GANO hesapla ve dönem ortalamaları"
-- "Devamsızlık durumunu kontrol et"
-
-### Üniversite Bilgileri
-- "MCBU'nun vizyon ve misyonunu anlat"
-- "Mühendislik fakültesindeki bölümleri listele"
-- "Akademik takvimi getir"
-- "İletişim bilgilerini göster"
-
-### İdari İşlemler
-- "Burs ve kredi bilgilerini göster"
-- "Staj kayıtlarını listele"
-- "Kulüp üyeliklerimi göster"
-- "Danışman bilgilerini getir"
-
-### Özel Sorgular
-- "En yüksek GANO'ya sahip öğrencileri listele"
-- "2024-2025 Güz döneminde verilen dersleri göster"
-- "Aktif kulüpleri ve üye sayılarını listele"
-
-## Tool Parametreleri
-
-### Student Database Tool
-```json
-{
-  "operation": "ogrenci_ara",
-  "arama_metni": "Ahmet",
-  "limit": 10
-}
-```
-
-### MCBU Web Scraper Tool
-```json
-{
-  "page_type": "vizyon_misyon"
-}
-```
-
-### Web API Tool (Mock)
-```json
-{
-  "api_endpoint": "student_info",
-  "student_id": "202012345"
-}
-```
-"""
+async def test_mcp_server():
+    """MCP server'ı test et"""
+    print("\n🧪 MCP Server test ediliyor...")
     
     try:
-        # Örnek sorguları dosyaya yaz
-        queries_path = project_root / "data" / "sample_queries.md"
-        queries_path.parent.mkdir(parents=True, exist_ok=True)
+        # Server'ı import et
+        from src.main import MCPServer
         
-        with open(queries_path, 'w', encoding='utf-8') as f:
-            f.write(sample_queries)
+        server = MCPServer()
         
-        print(f"   ✅ Örnek sorgular kaydedildi: {queries_path}")
-        return True
+        # Basit initialize test
+        init_request = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {}
+        }
+        
+        response = await server.handle_request(init_request)
+        
+        if response and response.get("result"):
+            print("   ✅ MCP Server başlatma OK")
+            
+            # Tools list test
+            tools_request = {
+                "jsonrpc": "2.0", 
+                "id": 2,
+                "method": "tools/list"
+            }
+            
+            tools_response = await server.handle_request(tools_request)
+            
+            if tools_response and tools_response.get("result"):
+                tools = tools_response["result"].get("tools", [])
+                print(f"   ✅ {len(tools)} tool kayıtlı")
+                
+                # Tool çağrısı test
+                call_request = {
+                    "jsonrpc": "2.0",
+                    "id": 3,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "student_database",
+                        "arguments": {
+                            "operation": "istatistik"
+                        }
+                    }
+                }
+                
+                call_response = await server.handle_request(call_request)
+                
+                if call_response and call_response.get("result"):
+                    print("   ✅ Tool çağrısı çalışıyor")
+                    return True
+        
+        print("   ❌ MCP Server test başarısız")
+        return False
         
     except Exception as e:
-        logger.error(f"❌ Örnek sorgu oluşturma hatası: {e}")
+        print(f"   ❌ MCP test hatası: {e}")
         return False
 
 async def main():
     """Ana kurulum fonksiyonu"""
-    print("🚀 Kurulum başlatılıyor...\n")
     
-    # Veritabanı kurulumu
-    db_success = await setup_database()
-    if not db_success:
-        print("❌ Veritabanı kurulumu başarısız!")
+    # Hızlı kurulum
+    setup_ok = await quick_setup()
+    
+    if not setup_ok:
+        print("\n❌ Kurulum başarısız!")
         return 1
     
-    # Tool testleri
-    tool_success = await test_tools()
-    if not tool_success:
-        print("⚠️  Tool testleri başarısız, ancak kurulum devam ediyor...")
+    # MCP test
+    mcp_ok = await test_mcp_server()
     
-    # Örnek sorgular
-    queries_success = await create_sample_queries()
-    if not queries_success:
-        print("⚠️  Örnek sorgu oluşturma başarısız...")
+    if not mcp_ok:
+        print("\n⚠️  MCP server test başarısız, ancak veritabanı kuruldu")
     
-    print("\n" + "=" * 60)
-    print("🎉 Kurulum tamamlandı!")
-    print("\n📋 Sonraki Adımlar:")
-    print("1. Continue.dev yapılandırması yapın")
-    print("2. 'python src/main.py' ile server'ı başlatın")
-    print("3. Continue.dev chat'inde örnek sorguları deneyin")
-    print("\n📚 Daha fazla bilgi için README.md dosyasına bakın")
+    print(f"\n✨ Kurulum dosyası: {project_root}/src/main.py")
+    print("🔗 Continue.dev ile kullanmaya hazır!")
     
     return 0
 
